@@ -51,6 +51,9 @@ func containsWord(message string, words []string) bool {
 
 func containsSpamWords(message string) bool {
 	messageLc := strings.ToLower(message)
+	if strings.Contains(messageLc, "https://discord.gift/") {
+		return false
+	}
 	if strings.Contains(messageLc, "nitro") {
 		blacklistedWords := []string{"airdrop", "free", "share your screen", "gift",
 			"discord", "https", "everyone", "steam", "https://"}
