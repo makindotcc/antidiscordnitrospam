@@ -46,17 +46,18 @@ func containsWord(message string, words []string) bool {
 			return true
 		}
 	}
-	return true
+	return false
 }
 
 func containsSpamWords(message string) bool {
 	messageLc := strings.ToLower(message)
+
 	if strings.Contains(messageLc, "https://discord.gift/") {
 		return false
 	}
 	if strings.Contains(messageLc, "nitro") {
 		blacklistedWords := []string{"airdrop", "free", "share your screen", "gift",
-			"discord", "https", "everyone", "steam", "https://"}
+			"https", "everyone", "steam", "https://"}
 		if containsWord(messageLc, blacklistedWords) {
 			return true
 		}
@@ -84,10 +85,14 @@ func isMessageASpam(m *discordgo.Message) bool {
 }
 
 func filterMessage(s *discordgo.Session, m *discordgo.Message) {
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
 	if !isMessageASpam(m) {
 		return
 	}
 
+	log.Println("Deleting message:", m.ChannelID, m.Author.Username, m.Content, m.ID)
 	err := s.ChannelMessageDelete(m.ChannelID, m.ID)
 	if err != nil {
 		log.Printf("Could not delete message %s: %s\n", m.ID, err)
@@ -116,20 +121,7 @@ func filterPreviousMessages(s *discordgo.Session) {
 }
 
 func filterNewMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-	if !isMessageASpam(m.Message) {
-		return
-	}
-
-	log.Println("Deleting message:", m.ChannelID, m.Author.Username, m.Content, m.ID)
-	err := s.ChannelMessageDelete(m.ChannelID, m.ID)
-	if err != nil {
-		log.Printf("Could not delete message %s: %s\n", m.ID, err)
-	}
-
-	informUserAboutSpamRemoval(s, m.Author.ID)
+	filterMessage(s, m.Message)
 }
 
 func informUserAboutSpamRemoval(s *discordgo.Session, authorID string) {
