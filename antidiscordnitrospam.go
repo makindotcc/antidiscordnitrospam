@@ -68,6 +68,12 @@ func containsSpamWords(message string) bool {
 			return true
 		}
 	}
+	blacklistedSentences := []string{"password: test", "can you test my", "/game/raw/main/", "first game"}
+	for _, s := range blacklistedSentences {
+		if strings.Contains(messageLc, s) {
+			return true
+		}
+	}
 	return false
 }
 
@@ -104,13 +110,15 @@ func filterPreviousMessages(s *discordgo.Session) {
 	for _, guild := range s.State.Guilds {
 		channels, err := s.GuildChannels(guild.ID)
 		if err != nil {
-			panic(err)
+			log.Printf("Could not fetch channels of guild %s: %s\n", guild.ID, err)
+			continue
 		}
 
 		for _, channel := range channels {
 			messages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
 			if err != nil {
-				panic(err)
+				log.Printf("Could not fetch messages of channel %s (%s): %s\n", channel.ID, channel.Name, err)
+				continue
 			}
 			for _, message := range messages {
 				filterMessage(s, message)
